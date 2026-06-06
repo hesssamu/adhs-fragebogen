@@ -2,134 +2,124 @@
 <html lang="de">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1" />
 <meta name="robots" content="noindex, nofollow" />
+<meta name="theme-color" content="#3f6cf6" />
 <title>Fragebogen ADHS &ndash; für Eltern</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.2/jspdf.umd.min.js"></script>
 <style>
   :root{
-    --bg:#f4f6f9; --card:#ffffff; --ink:#1f2733; --muted:#67727f;
-    --line:#e2e8f0; --brand:#3f6cf6; --brand-ink:#fff; --ok:#1f9d57;
-    --shadow:0 1px 3px rgba(20,30,50,.06),0 6px 24px rgba(20,30,50,.06);
+    --bg:#eef1f6; --card:#ffffff; --ink:#1f2733; --muted:#67727f;
+    --line:#e2e8f0; --brand:#3f6cf6; --brand-d:#3559d6; --ok:#1f9d57;
+    --shadow:0 1px 3px rgba(20,30,50,.06),0 10px 30px rgba(20,30,50,.08);
   }
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-  html,body{margin:0;padding:0}
+  html,body{margin:0;padding:0;height:100%}
   body{
     font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
     background:var(--bg); color:var(--ink); line-height:1.45;
     font-size:17px; -webkit-text-size-adjust:100%;
+    min-height:100dvh; display:flex; flex-direction:column;
   }
-  .wrap{max-width:620px;margin:0 auto;padding:16px 14px 140px}
-  .card{background:var(--card);border:1px solid var(--line);border-radius:16px;
-    padding:18px 16px;box-shadow:var(--shadow);margin:0 0 16px}
-  h1{font-size:21px;line-height:1.25;margin:0 0 6px}
-  h2{font-size:15px;letter-spacing:.04em;text-transform:uppercase;color:var(--brand);
-    margin:26px 4px 10px}
-  p.sub{color:var(--muted);font-size:14.5px;margin:0 0 4px}
-  .author{color:var(--muted);font-size:12.5px;margin:8px 0 0}
-  label.fld{display:block;margin:12px 0 0}
-  label.fld span{display:block;font-size:13.5px;color:var(--muted);margin:0 0 5px}
-  input[type=text],input[type=date]{
-    width:100%;font-size:17px;padding:12px 13px;border:1px solid var(--line);
-    border-radius:11px;background:#fbfcfe;color:var(--ink);font-family:inherit}
+  /* top progress */
+  .top{position:sticky;top:0;z-index:20;background:rgba(238,241,246,.92);
+    backdrop-filter:saturate(180%) blur(8px);padding:14px 16px calc(10px + env(safe-area-inset-top))}
+  .top .row{max-width:600px;margin:0 auto;display:flex;align-items:center;gap:12px}
+  .back{appearance:none;border:0;background:transparent;color:var(--muted);font-size:15px;
+    font-family:inherit;cursor:pointer;padding:6px 4px;min-width:64px;text-align:left;visibility:hidden}
+  .back:active{color:var(--ink)}
+  .ptxt{flex:1;text-align:center;font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
+  .spacer{min-width:64px}
+  .track{max-width:600px;margin:10px auto 0;height:6px;background:#dde3ec;border-radius:99px;overflow:hidden}
+  .fill{height:100%;width:0;background:var(--brand);border-radius:99px;transition:width .3s ease}
+
+  main{flex:1;display:flex;flex-direction:column;justify-content:flex-start}
+  .stagewrap{max-width:600px;width:100%;margin:0 auto;padding:8px 16px 40px;flex:1;
+    display:flex;flex-direction:column}
+  .stage{opacity:0;transform:translateY(10px);transition:opacity .22s ease,transform .22s ease;
+    flex:1;display:flex;flex-direction:column}
+  .stage.in{opacity:1;transform:none}
+
+  .kicker{font-size:13px;letter-spacing:.05em;text-transform:uppercase;color:var(--brand);
+    font-weight:700;margin:18px 2px 6px}
+  h1{font-size:23px;line-height:1.3;margin:0 0 10px}
+  .qtext{font-size:22px;line-height:1.34;font-weight:600;margin:8px 2px 22px}
+  p.sub{color:var(--muted);font-size:15.5px;margin:0 0 8px}
+  .author{color:var(--muted);font-size:12.5px;margin:18px 2px 0}
+
+  /* options as big stacked cards */
+  .opts{display:flex;flex-direction:column;gap:11px;margin-top:auto}
+  .optbtn{appearance:none;font-family:inherit;text-align:left;width:100%;cursor:pointer;
+    display:flex;align-items:center;gap:14px;padding:16px 16px;border:1.5px solid var(--line);
+    border-radius:15px;background:var(--card);color:var(--ink);box-shadow:var(--shadow);
+    transition:.12s;font-size:18px}
+  .optbtn .badge{flex:none;width:38px;height:38px;border-radius:11px;background:#eef2ff;
+    color:var(--brand);font-weight:800;font-size:19px;display:flex;align-items:center;justify-content:center}
+  .optbtn .lab{font-weight:600}
+  .optbtn:active{transform:scale(.985)}
+  .optbtn.sel{border-color:var(--brand);background:var(--brand);color:#fff}
+  .optbtn.sel .badge{background:rgba(255,255,255,.22);color:#fff}
+
+  /* form fields (intro) */
+  label.fld{display:block;margin:16px 0 0}
+  label.fld span{display:block;font-size:14px;color:var(--muted);margin:0 0 6px}
+  input[type=text],input[type=date]{width:100%;font-size:17px;padding:14px 14px;border:1.5px solid var(--line);
+    border-radius:13px;background:#fbfcfe;color:var(--ink);font-family:inherit}
   input:focus{outline:none;border-color:var(--brand);background:#fff}
-  .legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:13px;color:var(--muted);
-    margin:2px 4px 4px}
-  .legend b{color:var(--ink);font-weight:600}
-  .q{padding:14px 14px;border:1px solid var(--line);border-radius:14px;background:var(--card);
-    margin:0 0 11px;box-shadow:var(--shadow)}
-  .q.unset{}
-  .q .qt{font-size:16px;margin:0 0 11px;display:flex;gap:8px}
-  .q .qn{color:var(--brand);font-weight:700;min-width:24px}
-  .scale{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
-  .opt{position:relative}
-  .opt input{position:absolute;opacity:0;pointer-events:none}
-  .opt label{display:flex;flex-direction:column;align-items:center;justify-content:center;
-    gap:2px;padding:12px 4px 9px;border:1.5px solid var(--line);border-radius:12px;
-    background:#fbfcfe;cursor:pointer;transition:.12s;user-select:none}
-  .opt label .num{font-size:20px;font-weight:700;line-height:1}
-  .opt label .lab{font-size:10.5px;color:var(--muted);text-align:center;line-height:1.15}
-  .opt input:checked + label{background:var(--brand);border-color:var(--brand);color:#fff}
-  .opt input:checked + label .lab{color:rgba(255,255,255,.92)}
-  .opt label:active{transform:scale(.97)}
-  .bar{position:fixed;left:0;right:0;bottom:0;background:rgba(255,255,255,.94);
-    backdrop-filter:saturate(180%) blur(10px);border-top:1px solid var(--line);
-    padding:10px 14px calc(10px + env(safe-area-inset-bottom));z-index:30}
-  .bar .inner{max-width:620px;margin:0 auto;display:flex;align-items:center;gap:12px}
-  .prog{flex:1}
-  .prog .ptxt{font-size:12.5px;color:var(--muted);margin:0 0 5px}
-  .track{height:7px;background:var(--line);border-radius:99px;overflow:hidden}
-  .fill{height:100%;width:0;background:var(--brand);border-radius:99px;transition:width .25s}
-  button.send{appearance:none;border:0;background:var(--brand);color:var(--brand-ink);
-    font-size:16.5px;font-weight:700;font-family:inherit;padding:13px 20px;border-radius:12px;
-    cursor:pointer;white-space:nowrap}
-  button.send:disabled{background:#c4ccd8;cursor:not-allowed}
-  button.send:active:not(:disabled){transform:scale(.98)}
-  .note{font-size:13px;color:var(--muted);margin:14px 4px 0;text-align:center}
-  .err{color:#c23b3b;font-size:13.5px;margin:8px 4px 0;display:none}
-  /* overlay states */
-  .overlay{position:fixed;inset:0;background:rgba(244,246,249,.97);z-index:60;
+
+  /* primary button */
+  .cta{appearance:none;border:0;font-family:inherit;width:100%;font-size:18px;font-weight:700;
+    padding:16px 20px;border-radius:14px;cursor:pointer;background:var(--brand);color:#fff;
+    box-shadow:var(--shadow);margin-top:22px}
+  .cta:active{transform:scale(.99)}
+  .cta.ghost{background:#fff;color:var(--brand);border:1.5px solid var(--line);box-shadow:none;margin-top:10px}
+  .err{color:#c23b3b;font-size:14.5px;margin:14px 2px 0;display:none}
+  .miss{border-color:#f0a8a8 !important;background:#fff6f6 !important}
+
+  /* review list */
+  .rev{margin:10px 0 0;display:flex;flex-direction:column;gap:8px}
+  .revsec{font-size:12.5px;letter-spacing:.04em;text-transform:uppercase;color:var(--brand);
+    font-weight:700;margin:14px 2px 2px}
+  .revrow{display:flex;align-items:center;gap:10px;padding:11px 12px;border:1px solid var(--line);
+    border-radius:11px;background:var(--card);cursor:pointer}
+  .revrow .rn{color:var(--muted);font-size:13px;min-width:22px}
+  .revrow .rt{flex:1;font-size:14px;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .revrow .rv{flex:none;width:28px;height:28px;border-radius:8px;background:var(--brand);color:#fff;
+    font-weight:700;font-size:15px;display:flex;align-items:center;justify-content:center}
+  .revrow.todo .rv{background:#f0b4b4}
+
+  /* overlay */
+  .overlay{position:fixed;inset:0;background:rgba(238,241,246,.97);z-index:60;
     display:none;align-items:center;justify-content:center;padding:24px;text-align:center}
   .overlay.show{display:flex}
-  .overlay .box{max-width:420px}
-  .overlay h3{font-size:22px;margin:14px 0 8px}
-  .overlay p{color:var(--muted);font-size:15.5px;margin:0 0 6px}
-  .spin{width:46px;height:46px;border-radius:50%;border:4px solid var(--line);
+  .overlay h3{font-size:24px;margin:16px 0 8px}
+  .overlay p{color:var(--muted);font-size:16px;margin:0 auto;max-width:340px}
+  .spin{width:48px;height:48px;border-radius:50%;border:4px solid var(--line);
     border-top-color:var(--brand);animation:sp 1s linear infinite;margin:0 auto}
   @keyframes sp{to{transform:rotate(360deg)}}
-  .check{width:64px;height:64px;border-radius:50%;background:var(--ok);margin:0 auto;
-    display:flex;align-items:center;justify-content:center;color:#fff;font-size:34px}
-  .miss{outline:2px solid #f0b4b4;outline-offset:2px}
+  .check{width:72px;height:72px;border-radius:50%;background:var(--ok);margin:0 auto;
+    display:flex;align-items:center;justify-content:center;color:#fff;font-size:40px}
 </style>
 </head>
 <body>
-<div class="wrap">
 
-  <div class="card">
-    <h1>Fragebogen zu Aufmerksamkeitsproblemen und Hyperaktivität</h1>
-    <p class="sub">für Erwachsenenalter und Kindheit &ndash; für Eltern / Angehörige</p>
-    <p class="sub" style="margin-top:10px">Bitte beschreiben Sie das Verhalten der betreffenden Person.
-      Wählen Sie bei jeder Frage einen Wert. Am Ende auf <b>Absenden</b> tippen &ndash;
-      der ausgefüllte Fragebogen wird automatisch verschickt.</p>
-
-    <label class="fld"><span>Name</span>
-      <input type="text" id="f_name" autocomplete="off" /></label>
-    <label class="fld"><span>Geburtsdatum</span>
-      <input type="date" id="f_dob" /></label>
-    <label class="fld"><span>Patientennr. (optional)</span>
-      <input type="text" id="f_pid" autocomplete="off" /></label>
-    <label class="fld"><span>Datum</span>
-      <input type="date" id="f_date" /></label>
-    <p class="author">J.J.S. Kooij and J.K. Buitelaar, &copy; 1997</p>
+<div class="top">
+  <div class="row">
+    <button class="back" id="back">&#8249; Zurück</button>
+    <div class="ptxt" id="ptxt"></div>
+    <div class="spacer"></div>
   </div>
-
-  <div class="legend" id="legend">
-    <span><b>0</b> = nie/selten</span><span><b>1</b> = manchmal</span>
-    <span><b>2</b> = oft</span><span><b>3</b> = sehr oft</span>
-  </div>
-
-  <h2>Teil 1 &middot; Erwachsenenalter (letzte 6 Monate)</h2>
-  <div id="sec1"></div>
-
-  <h2>Teil 2 &middot; Kindheit (0&ndash;12 Jahre)</h2>
-  <div id="sec2"></div>
-
-  <p class="err" id="err"></p>
-  <p class="note">Mit dem Absenden werden die Antworten als PDF an Samuel gesendet.</p>
+  <div class="track"><div class="fill" id="fill"></div></div>
 </div>
 
-<div class="bar">
-  <div class="inner">
-    <div class="prog">
-      <div class="ptxt"><span id="pcount">0</span> von 46 beantwortet</div>
-      <div class="track"><div class="fill" id="pfill"></div></div>
-    </div>
-    <button class="send" id="send" disabled>Absenden</button>
+<main>
+  <div class="stagewrap">
+    <div class="stage" id="stage"></div>
   </div>
-</div>
+</main>
 
 <div class="overlay" id="ov">
-  <div class="box">
+  <div>
     <div id="ov_spin" class="spin"></div>
     <div id="ov_check" class="check" style="display:none">&#10003;</div>
     <h3 id="ov_title">Wird gesendet&hellip;</h3>
@@ -140,13 +130,13 @@
 <script>
 (function(){
   "use strict";
-  // ---- recipient (lightly obfuscated) ----
-  var RCPT = ["samhesselias","gmail","com"];
-  var EMAIL = RCPT[0] + "@" + RCPT[1] + "." + RCPT[2];
+  var RCPT=["samhesselias","gmail","com"];
+  var EMAIL=RCPT[0]+"@"+RCPT[1]+"."+RCPT[2];
+  var PREFILL_NAME="Samuel Hess";
 
-  var LABELS = ["nie/­selten","manch­mal","oft","sehr oft"];
+  var OPT_LABELS=["nie oder selten","manchmal","oft","sehr oft"];
 
-  var Q1 = [
+  var Q1=[
     "Achtet bei (Schul-)Arbeit nicht ausreichend auf Details.",
     "Wenn er/sie sitzt, zappelt er/sie mit Händen oder Füßen.",
     "Macht Flüchtigkeitsfehler bei der Arbeit.",
@@ -171,7 +161,7 @@
     "Ist bei alltäglichen Tätigkeiten vergesslich.",
     "Unterbricht andere oder fällt ihnen ins Wort."
   ];
-  var Q2 = [
+  var Q2=[
     "Achtete bei Schularbeiten nicht ausreichend auf Details.",
     "Zappelte mit Händen oder Füßen.",
     "Machte Flüchtigkeitsfehler bei Schularbeiten.",
@@ -197,235 +187,237 @@
     "Unterbrach andere oder fiel ihnen ins Wort."
   ];
 
-  var answers = {}; // key "1_0".."1_22","2_0".."2_22"
-  var TOTAL = Q1.length + Q2.length;
+  // flatten into a question list with section info
+  var QUESTIONS=[];
+  Q1.forEach(function(t,i){QUESTIONS.push({sec:1,i:i,text:t});});
+  Q2.forEach(function(t,i){QUESTIONS.push({sec:2,i:i,text:t});});
+  var TOTAL=QUESTIONS.length;
 
-  function buildSection(arr, sec, mount){
-    var frag = document.createDocumentFragment();
-    arr.forEach(function(text, i){
-      var key = sec + "_" + i;
-      var q = document.createElement("div");
-      q.className = "q unset";
-      q.id = "q_" + key;
-      var qt = document.createElement("div");
-      qt.className = "qt";
-      var qn = document.createElement("div");
-      qn.className = "qn"; qn.textContent = (i+1) + ".";
-      var tx = document.createElement("div");
-      tx.textContent = text;
-      qt.appendChild(qn); qt.appendChild(tx);
-      var scale = document.createElement("div");
-      scale.className = "scale";
-      for(var v=0; v<4; v++){
-        var opt = document.createElement("div");
-        opt.className = "opt";
-        var id = "r_" + key + "_" + v;
-        var inp = document.createElement("input");
-        inp.type = "radio"; inp.name = key; inp.id = id; inp.value = v;
-        var lb = document.createElement("label");
-        lb.setAttribute("for", id);
-        var num = document.createElement("span");
-        num.className = "num"; num.textContent = v;
-        var lab = document.createElement("span");
-        lab.className = "lab"; lab.textContent = LABELS[v];
-        lb.appendChild(num); lb.appendChild(lab);
-        opt.appendChild(inp); opt.appendChild(lb);
-        scale.appendChild(opt);
-        (function(k,val,qEl){
-          inp.addEventListener("change", function(){
-            answers[k] = val;
-            qEl.classList.remove("unset");
-            qEl.classList.remove("miss");
-            updateProgress();
-          });
-        })(key, v, q);
-      }
-      q.appendChild(qt); q.appendChild(scale);
-      frag.appendChild(q);
+  var answers={}; // key "1_0" -> 0..3
+  var meta={name:PREFILL_NAME,dob:"",pid:"",date:todayISO()};
+
+  // steps: 0 = intro, 1..TOTAL = questions, TOTAL+1 = review
+  var step=0;
+  var stageEl=document.getElementById("stage");
+  var backBtn=document.getElementById("back");
+  var ptxt=document.getElementById("ptxt");
+  var fill=document.getElementById("fill");
+
+  function todayISO(){var d=new Date();var m=String(d.getMonth()+1).padStart(2,"0");
+    var day=String(d.getDate()).padStart(2,"0");return d.getFullYear()+"-"+m+"-"+day;}
+  function deDate(iso){if(!iso)return"";var p=iso.split("-");return p.length===3?p[2]+"."+p[1]+"."+p[0]:iso;}
+
+  function setProgress(){
+    var answered=Object.keys(answers).length;
+    if(step===0){ptxt.textContent="Angaben zur Person";fill.style.width="0%";}
+    else if(step<=TOTAL){ptxt.textContent="Frage "+step+" von "+TOTAL;fill.style.width=(step/(TOTAL+1)*100)+"%";}
+    else {ptxt.textContent="Überprüfen & Absenden";fill.style.width="100%";}
+    backBtn.style.visibility = step>0 ? "visible" : "hidden";
+  }
+
+  function render(html){
+    stageEl.classList.remove("in");
+    stageEl.innerHTML=html;
+    // force reflow then animate in
+    void stageEl.offsetWidth;
+    stageEl.classList.add("in");
+    setProgress();
+    window.scrollTo(0,0);
+  }
+
+  function goto(n){ step=n; if(step<0)step=0; draw(); }
+
+  function draw(){
+    if(step===0) return drawIntro();
+    if(step<=TOTAL) return drawQuestion(step-1);
+    return drawReview();
+  }
+
+  function drawIntro(){
+    render(
+      '<div class="kicker">Fragebogen</div>'+
+      '<h1>Aufmerksamkeit &amp; Hyperaktivität &ndash; für Eltern / Angehörige</h1>'+
+      '<p class="sub">Bitte beschreiben Sie das Verhalten der betreffenden Person. '+
+      'Es folgen '+TOTAL+' kurze Fragen &ndash; eine nach der anderen. Am Ende wird der '+
+      'ausgefüllte Fragebogen automatisch verschickt.</p>'+
+      '<label class="fld"><span>Name</span><input type="text" id="f_name" autocomplete="off" value="'+escapeAttr(meta.name)+'"></label>'+
+      '<label class="fld"><span>Geburtsdatum</span><input type="date" id="f_dob" value="'+escapeAttr(meta.dob)+'"></label>'+
+      '<label class="fld"><span>Patientennr. (optional)</span><input type="text" id="f_pid" autocomplete="off" value="'+escapeAttr(meta.pid)+'"></label>'+
+      '<label class="fld"><span>Datum</span><input type="date" id="f_date" value="'+escapeAttr(meta.date)+'"></label>'+
+      '<p class="err" id="introErr"></p>'+
+      '<button class="cta" id="start">Los geht\'s</button>'+
+      '<p class="author">J.J.S. Kooij and J.K. Buitelaar, &copy; 1997</p>'
+    );
+    document.getElementById("start").addEventListener("click",function(){
+      var name=document.getElementById("f_name").value.trim();
+      var dob=document.getElementById("f_dob").value;
+      if(!name){flagErr("introErr","Bitte den Namen eintragen.","f_name");return;}
+      if(!dob){flagErr("introErr","Bitte das Geburtsdatum eintragen.","f_dob");return;}
+      meta.name=name; meta.dob=dob;
+      meta.pid=document.getElementById("f_pid").value.trim();
+      meta.date=document.getElementById("f_date").value||todayISO();
+      goto(1);
     });
-    mount.appendChild(frag);
   }
 
-  function updateProgress(){
-    var n = Object.keys(answers).length;
-    document.getElementById("pcount").textContent = n;
-    document.getElementById("pfill").style.width = (n/TOTAL*100) + "%";
-    document.getElementById("send").disabled = false; // allow tap; validate on click
+  function flagErr(errId,msg,fieldId){
+    var e=document.getElementById(errId);e.textContent=msg;e.style.display="block";
+    if(fieldId){var f=document.getElementById(fieldId);f.classList.add("miss");f.focus();
+      f.addEventListener("input",function(){f.classList.remove("miss");},{once:true});}
   }
 
-  function todayISO(){
-    var d = new Date();
-    var m = String(d.getMonth()+1).padStart(2,"0");
-    var day = String(d.getDate()).padStart(2,"0");
-    return d.getFullYear() + "-" + m + "-" + day;
+  function drawQuestion(idx){
+    var q=QUESTIONS[idx];
+    var key=q.sec+"_"+q.i;
+    var cur=answers[key];
+    var kicker = q.sec===1 ? "Teil 1 &middot; Erwachsenenalter (letzte 6 Monate)"
+                           : "Teil 2 &middot; Kindheit (0&ndash;12 Jahre)";
+    var localNo = q.i+1;
+    var opts="";
+    for(var v=0;v<4;v++){
+      opts+='<button class="optbtn'+(cur===v?" sel":"")+'" data-v="'+v+'">'+
+            '<span class="badge">'+v+'</span><span class="lab">'+OPT_LABELS[v]+'</span></button>';
+    }
+    render(
+      '<div class="kicker">'+kicker+'</div>'+
+      '<div class="qtext"><span style="color:var(--brand)">'+localNo+'.</span> '+escapeHtml(q.text)+'</div>'+
+      '<div class="opts">'+opts+'</div>'
+    );
+    var btns=stageEl.querySelectorAll(".optbtn");
+    btns.forEach(function(b){
+      b.addEventListener("click",function(){
+        var v=parseInt(b.getAttribute("data-v"),10);
+        answers[key]=v;
+        btns.forEach(function(x){x.classList.remove("sel");});
+        b.classList.add("sel");
+        // brief highlight then advance
+        setTimeout(function(){ goto(step+1); }, 180);
+      });
+    });
   }
-  function deDate(iso){
-    if(!iso) return "";
-    var p = iso.split("-");
-    if(p.length!==3) return iso;
-    return p[2] + "." + p[1] + "." + p[0];
+
+  function drawReview(){
+    var rows="";
+    var firstTodo=null;
+    QUESTIONS.forEach(function(q,idx){
+      var key=q.sec+"_"+q.i;
+      var v=answers[key];
+      var done=v!==undefined;
+      if(!done && firstTodo===null) firstTodo=idx+1;
+      if(q.i===0){ rows+='<div class="revsec">'+(q.sec===1?"Teil 1 &middot; Erwachsenenalter":"Teil 2 &middot; Kindheit")+'</div>'; }
+      rows+='<div class="revrow'+(done?"":" todo")+'" data-step="'+(idx+1)+'">'+
+            '<span class="rn">'+(q.i+1)+'.</span>'+
+            '<span class="rt">'+escapeHtml(q.text)+'</span>'+
+            '<span class="rv">'+(done?v:"&middot;")+'</span></div>';
+    });
+    var answered=Object.keys(answers).length;
+    var complete=answered===TOTAL;
+    render(
+      '<div class="kicker">Fast geschafft</div>'+
+      '<h1>'+(complete?"Alle Fragen beantwortet ✓":"Noch "+(TOTAL-answered)+" offen")+'</h1>'+
+      '<p class="sub"><b>'+escapeHtml(meta.name)+'</b> &middot; geb. '+deDate(meta.dob)+' &middot; '+deDate(meta.date)+
+        '<br>Tippen Sie auf eine Frage, um die Antwort zu ändern.</p>'+
+      '<div class="rev">'+rows+'</div>'+
+      '<p class="err" id="sendErr"></p>'+
+      '<button class="cta" id="send">Absenden</button>'+
+      '<button class="cta ghost" id="editName">Angaben zur Person ändern</button>'
+    );
+    stageEl.querySelectorAll(".revrow").forEach(function(r){
+      r.addEventListener("click",function(){ goto(parseInt(r.getAttribute("data-step"),10)); });
+    });
+    document.getElementById("editName").addEventListener("click",function(){ goto(0); });
+    document.getElementById("send").addEventListener("click",function(){
+      if(!complete){
+        flagErr("sendErr","Bitte zuerst alle Fragen beantworten. Tippen Sie auf eine rot markierte Frage.",null);
+        if(firstTodo) setTimeout(function(){goto(firstTodo);},900);
+        return;
+      }
+      submit();
+    });
   }
 
   // ---------- PDF ----------
-  function buildPDF(meta){
-    var jsPDF = window.jspdf.jsPDF;
-    var doc = new jsPDF({unit:"mm", format:"a4"});
-    var W = 210, L = 14, R = 196;
-    var scaleX = [173, 181, 189, 197];
-
+  function buildPDF(){
+    var jsPDF=window.jspdf.jsPDF;
+    var doc=new jsPDF({unit:"mm",format:"a4"});
+    var L=14,R=196,scaleX=[173,181,189,197];
     function header(){
-      var y = 16;
-      doc.setFont("helvetica","bold"); doc.setFontSize(12);
-      doc.text("Fragebogen zu Aufmerksamkeitsproblemen und Hyperaktivität", L, y);
-      y += 5.2;
-      doc.text("für Erwachsenenalter und Kindheit - für Eltern / Angehörige", L, y);
-      y += 5;
-      doc.setFont("helvetica","normal"); doc.setFontSize(8.5);
-      doc.text("J.J.S. Kooij and J.K. Buitelaar, © 1997", L, y);
-      y += 6.5;
+      var y=16;
+      doc.setFont("helvetica","bold");doc.setFontSize(12);
+      doc.text("Fragebogen zu Aufmerksamkeitsproblemen und Hyperaktivität",L,y);y+=5.2;
+      doc.text("für Erwachsenenalter und Kindheit - für Eltern / Angehörige",L,y);y+=5;
+      doc.setFont("helvetica","normal");doc.setFontSize(8.5);
+      doc.text("J.J.S. Kooij and J.K. Buitelaar, © 1997",L,y);y+=6.5;
       doc.setFontSize(9.5);
-      var line = "Name: " + (meta.name||"") + "    Geburtsdatum: " + deDate(meta.dob) +
-                 "    Patientennr.: " + (meta.pid||"-") + "    Datum: " + deDate(meta.date);
-      doc.text(line, L, y);
-      return y + 6;
+      doc.text("Name: "+(meta.name||"")+"    Geburtsdatum: "+deDate(meta.dob)+
+               "    Patientennr.: "+(meta.pid||"-")+"    Datum: "+deDate(meta.date),L,y);
+      return y+6;
     }
-
-    function legend(y, intro){
-      doc.setFont("helvetica","normal"); doc.setFontSize(8.5);
-      var lines = doc.splitTextToSize(intro, R - L);
-      doc.text(lines, L, y);
-      y += lines.length*3.8 + 1.5;
+    function legend(y,intro){
+      doc.setFont("helvetica","normal");doc.setFontSize(8.5);
+      var lines=doc.splitTextToSize(intro,R-L);doc.text(lines,L,y);y+=lines.length*3.8+1.5;
       doc.setFont("helvetica","bold");
-      doc.text("0 = nie oder selten    1 = manchmal    2 = oft    3 = sehr oft", L, y);
-      doc.setFont("helvetica","normal");
-      return y + 5;
+      doc.text("0 = nie oder selten    1 = manchmal    2 = oft    3 = sehr oft",L,y);
+      doc.setFont("helvetica","normal");return y+5;
     }
-
-    function section(y, arr, sec){
+    function section(y,arr,sec){
       doc.setFontSize(9);
       for(var i=0;i<arr.length;i++){
-        var num = (i+1) + ".";
-        var txt = num + " " + arr[i];
-        var wrapped = doc.splitTextToSize(txt, 150);
-        doc.setFont("helvetica","normal");
-        doc.text(wrapped, L, y);
-        // scale numbers on first line
-        var sel = answers[sec + "_" + i];
-        for(var v=0; v<4; v++){
-          if(v === sel){
-            doc.setFont("helvetica","bold");
-            doc.circle(scaleX[v], y-1.1, 2.3);
-          } else {
-            doc.setFont("helvetica","normal");
-          }
-          doc.text(String(v), scaleX[v]-1, y, {baseline:"alphabetic"});
+        var wrapped=doc.splitTextToSize((i+1)+". "+arr[i],150);
+        doc.setFont("helvetica","normal");doc.text(wrapped,L,y);
+        var sel=answers[sec+"_"+i];
+        for(var v=0;v<4;v++){
+          if(v===sel){doc.setFont("helvetica","bold");doc.circle(scaleX[v],y-1.1,2.3);}
+          else doc.setFont("helvetica","normal");
+          doc.text(String(v),scaleX[v]-1,y);
         }
-        y += wrapped.length*4.0 + 2.0;
+        y+=wrapped.length*4.0+2.0;
       }
       return y;
     }
-
-    // page 1
-    var y = header();
-    y = legend(y, "Kreisen Sie bitte die Zahl ein, die das Verhalten der betreffenden Person in den letzten sechs Monaten am besten beschreibt. Geben Sie jeweils nur einen Wert an (0, 1, 2 oder 3).");
-    section(y, Q1, "1");
-
-    // page 2
-    doc.addPage();
-    y = header();
-    y = legend(y, "Die folgenden Fragen beziehen sich auf dieselben Merkmale, diesmal aber in der Kindheit. Kreisen Sie bitte die Zahl ein, die das Verhalten der betreffenden Person als Kind (0-12 Jahre) am besten beschreibt.");
-    section(y, Q2, "2");
-
+    var y=header();
+    y=legend(y,"Kreisen Sie bitte die Zahl ein, die das Verhalten der betreffenden Person in den letzten sechs Monaten am besten beschreibt. Geben Sie jeweils nur einen Wert an (0, 1, 2 oder 3).");
+    section(y,Q1,"1");
+    doc.addPage();y=header();
+    y=legend(y,"Die folgenden Fragen beziehen sich auf dieselben Merkmale, diesmal aber in der Kindheit. Kreisen Sie bitte die Zahl ein, die das Verhalten der betreffenden Person als Kind (0-12 Jahre) am besten beschreibt.");
+    section(y,Q2,"2");
     return doc.output("blob");
   }
 
-  // ---------- submit ----------
-  function firstMissing(){
-    if(!document.getElementById("f_name").value.trim()) return {field:"name"};
-    if(!document.getElementById("f_dob").value) return {field:"dob"};
-    for(var s=1;s<=2;s++){
-      var arr = s===1?Q1:Q2;
-      for(var i=0;i<arr.length;i++){
-        if(answers[s+"_"+i] === undefined) return {sec:s,i:i};
-      }
-    }
-    return null;
-  }
-
-  function showErr(msg){
-    var e = document.getElementById("err");
-    e.textContent = msg; e.style.display = "block";
-  }
-
-  function send(){
-    var miss = firstMissing();
-    if(miss){
-      if(miss.field === "name"){ showErr("Bitte den Namen eintragen."); document.getElementById("f_name").classList.add("miss"); document.getElementById("f_name").focus(); return; }
-      if(miss.field === "dob"){ showErr("Bitte das Geburtsdatum eintragen."); document.getElementById("f_dob").classList.add("miss"); document.getElementById("f_dob").focus(); return; }
-      var n = Object.keys(answers).length;
-      showErr("Bitte alle Fragen beantworten (" + n + " von " + TOTAL + "). Die nächste offene Frage ist markiert.");
-      var el = document.getElementById("q_" + miss.sec + "_" + miss.i);
-      el.classList.add("miss");
-      el.scrollIntoView({behavior:"smooth", block:"center"});
-      return;
-    }
-    document.getElementById("err").style.display = "none";
-
-    var meta = {
-      name: document.getElementById("f_name").value.trim(),
-      dob: document.getElementById("f_dob").value,
-      pid: document.getElementById("f_pid").value.trim(),
-      date: document.getElementById("f_date").value || todayISO()
-    };
-
-    // overlay -> sending
-    var ov = document.getElementById("ov");
-    ov.classList.add("show");
-
+  function submit(){
+    var ov=document.getElementById("ov");ov.classList.add("show");
     var blob;
-    try { blob = buildPDF(meta); }
-    catch(e){ ov.classList.remove("show"); showErr("PDF konnte nicht erstellt werden. Bitte Seite neu laden."); return; }
-
-    var safeName = (meta.name||"Fragebogen").replace(/[^\wäöüÄÖÜß \-]/g,"").replace(/\s+/g,"_");
-    var fname = "ADHS-Fragebogen_" + safeName + ".pdf";
-
-    var fd = new FormData();
-    fd.append("_subject", "ADHS-Fragebogen ausgefüllt: " + meta.name);
-    fd.append("_captcha", "false");
-    fd.append("_template", "table");
-    fd.append("Name", meta.name);
-    fd.append("Geburtsdatum", deDate(meta.dob));
-    fd.append("Patientennr", meta.pid || "-");
-    fd.append("Datum", deDate(meta.date));
-    fd.append("Hinweis", "Der vollständig ausgefüllte Fragebogen ist als PDF angehängt.");
-    fd.append("attachment", blob, fname);
-
-    var url = "https://formsubmit.co/" + EMAIL;
-
+    try{blob=buildPDF();}
+    catch(e){ov.classList.remove("show");flagErr("sendErr","PDF konnte nicht erstellt werden. Bitte Seite neu laden.",null);return;}
+    var safe=(meta.name||"Fragebogen").replace(/[^\wäöüÄÖÜß \-]/g,"").replace(/\s+/g,"_");
+    var fname="ADHS-Fragebogen_"+safe+".pdf";
+    var fd=new FormData();
+    fd.append("_subject","ADHS-Fragebogen ausgefüllt: "+meta.name);
+    fd.append("_captcha","false");
+    fd.append("_template","table");
+    fd.append("Name",meta.name);
+    fd.append("Geburtsdatum",deDate(meta.dob));
+    fd.append("Patientennr",meta.pid||"-");
+    fd.append("Datum",deDate(meta.date));
+    fd.append("Hinweis","Der vollständig ausgefüllte Fragebogen ist als PDF angehängt.");
+    fd.append("attachment",blob,fname);
+    fetch("https://formsubmit.co/"+EMAIL,{method:"POST",body:fd,mode:"no-cors"})
+      .then(done).catch(done);
     function done(){
-      document.getElementById("ov_spin").style.display = "none";
-      document.getElementById("ov_check").style.display = "flex";
-      document.getElementById("ov_title").textContent = "Vielen Dank!";
-      document.getElementById("ov_msg").textContent = "Der Fragebogen wurde an Samuel gesendet. Sie können dieses Fenster jetzt schließen.";
+      document.getElementById("ov_spin").style.display="none";
+      document.getElementById("ov_check").style.display="flex";
+      document.getElementById("ov_title").textContent="Vielen Dank!";
+      document.getElementById("ov_msg").textContent="Der Fragebogen wurde an Samuel gesendet. Sie können dieses Fenster jetzt schließen.";
     }
-
-    fetch(url, {method:"POST", body:fd, mode:"no-cors"})
-      .then(function(){ done(); })
-      .catch(function(){
-        // no-cors resolves opaque; this path is rare. Treat as sent but offer download.
-        done();
-      });
   }
 
-  // ---------- init ----------
-  buildSection(Q1, "1", document.getElementById("sec1"));
-  buildSection(Q2, "2", document.getElementById("sec2"));
-  document.getElementById("f_date").value = todayISO();
-  document.getElementById("send").addEventListener("click", send);
-  ["f_name","f_dob"].forEach(function(id){
-    document.getElementById(id).addEventListener("input", function(){ this.classList.remove("miss"); });
-  });
-  updateProgress();
+  // ---------- helpers ----------
+  function escapeHtml(s){return String(s).replace(/[&<>]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;"}[c];});}
+  function escapeAttr(s){return String(s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];});}
+
+  backBtn.addEventListener("click",function(){ if(step>0) goto(step-1); });
+
+  draw();
 })();
 </script>
 </body>
