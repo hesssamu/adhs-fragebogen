@@ -46,6 +46,11 @@
   .qtext{font-size:22px;line-height:1.34;font-weight:600;margin:8px 2px 22px}
   p.sub{color:var(--muted);font-size:15.5px;margin:0 0 8px}
   .author{color:var(--muted);font-size:12.5px;margin:18px 2px 0}
+  .infoblock{display:flex;flex-direction:column;gap:10px;margin:18px 0 0}
+  .infrow{display:flex;align-items:flex-start;gap:12px;padding:14px 14px;border:1px solid var(--line);
+    border-radius:14px;background:var(--card);box-shadow:var(--shadow);font-size:16px}
+  .infrow .ipill{flex:none;background:#eef2ff;color:var(--brand);font-weight:800;font-size:13px;
+    padding:6px 10px;border-radius:9px;letter-spacing:.02em}
 
   /* options as big stacked cards */
   .opts{display:flex;flex-direction:column;gap:11px;margin-top:auto}
@@ -132,7 +137,8 @@
   "use strict";
   var RCPT=["samhesselias","gmail","com"];
   var EMAIL=RCPT[0]+"@"+RCPT[1]+"."+RCPT[2];
-  var PREFILL_NAME="Samuel Hess";
+  var PERSON_NAME="Samuel Hess";   // wer beurteilt wird
+  var BIRTHDATE="";                // optional: "YYYY-MM-DD" -> erscheint im PDF
 
   var OPT_LABELS=["nie oder selten","manchmal","oft","sehr oft"];
 
@@ -194,7 +200,8 @@
   var TOTAL=QUESTIONS.length;
 
   var answers={}; // key "1_0" -> 0..3
-  var meta={name:PREFILL_NAME,dob:"",pid:"",date:todayISO()};
+  var meta={name:PERSON_NAME,dob:BIRTHDATE,pid:"",date:todayISO()};
+  var part2Shown=false; // interstitial vor dem Kindheits-Teil
 
   // steps: 0 = intro, 1..TOTAL = questions, TOTAL+1 = review
   var step=0;
@@ -209,7 +216,7 @@
 
   function setProgress(){
     var answered=Object.keys(answers).length;
-    if(step===0){ptxt.textContent="Angaben zur Person";fill.style.width="0%";}
+    if(step===0){ptxt.textContent="Einführung";fill.style.width="0%";}
     else if(step<=TOTAL){ptxt.textContent="Frage "+step+" von "+TOTAL;fill.style.width=(step/(TOTAL+1)*100)+"%";}
     else {ptxt.textContent="Überprüfen & Absenden";fill.style.width="100%";}
     backBtn.style.visibility = step>0 ? "visible" : "hidden";
@@ -235,29 +242,35 @@
 
   function drawIntro(){
     render(
-      '<div class="kicker">Fragebogen</div>'+
-      '<h1>Aufmerksamkeit &amp; Hyperaktivität &ndash; für Eltern / Angehörige</h1>'+
-      '<p class="sub">Bitte beschreiben Sie das Verhalten der betreffenden Person. '+
-      'Es folgen '+TOTAL+' kurze Fragen &ndash; eine nach der anderen. Am Ende wird der '+
-      'ausgefüllte Fragebogen automatisch verschickt.</p>'+
-      '<label class="fld"><span>Name</span><input type="text" id="f_name" autocomplete="off" value="'+escapeAttr(meta.name)+'"></label>'+
-      '<label class="fld"><span>Geburtsdatum</span><input type="date" id="f_dob" value="'+escapeAttr(meta.dob)+'"></label>'+
-      '<label class="fld"><span>Patientennr. (optional)</span><input type="text" id="f_pid" autocomplete="off" value="'+escapeAttr(meta.pid)+'"></label>'+
-      '<label class="fld"><span>Datum</span><input type="date" id="f_date" value="'+escapeAttr(meta.date)+'"></label>'+
-      '<p class="err" id="introErr"></p>'+
+      '<div class="kicker">Fragebogen über '+escapeHtml(meta.name)+'</div>'+
+      '<h1>Fragebogen zu Aufmerksamkeit &amp; Hyperaktivität</h1>'+
+      '<p class="sub">Liebe Mama, dieser Fragebogen hilft bei einer ADHS-Abklärung. '+
+      'Es geht darum, wie du mein Verhalten einschätzt.</p>'+
+      '<div class="infoblock">'+
+        '<div class="infrow"><span class="ipill">Teil 1</span>'+
+          '<span>So bin ich <b>heute</b> (Erwachsenenalter, letzte 6 Monate).</span></div>'+
+        '<div class="infrow"><span class="ipill">Teil 2</span>'+
+          '<span>Wie ich als <b>Kind</b> war (0&ndash;12 Jahre).</span></div>'+
+      '</div>'+
+      '<p class="sub" style="margin-top:16px">Es folgen '+TOTAL+' kurze Fragen &ndash; eine nach der anderen. '+
+      'Wähle bei jeder einfach den Wert von <b>0</b> (nie/selten) bis <b>3</b> (sehr oft). '+
+      'Am Ende kannst du alles prüfen und auf <b>Absenden</b> tippen &ndash; '+
+      'der Fragebogen kommt dann automatisch bei mir an.</p>'+
       '<button class="cta" id="start">Los geht\'s</button>'+
       '<p class="author">J.J.S. Kooij and J.K. Buitelaar, &copy; 1997</p>'
     );
-    document.getElementById("start").addEventListener("click",function(){
-      var name=document.getElementById("f_name").value.trim();
-      var dob=document.getElementById("f_dob").value;
-      if(!name){flagErr("introErr","Bitte den Namen eintragen.","f_name");return;}
-      if(!dob){flagErr("introErr","Bitte das Geburtsdatum eintragen.","f_dob");return;}
-      meta.name=name; meta.dob=dob;
-      meta.pid=document.getElementById("f_pid").value.trim();
-      meta.date=document.getElementById("f_date").value||todayISO();
-      goto(1);
-    });
+    document.getElementById("start").addEventListener("click",function(){ goto(1); });
+  }
+
+  function drawPart2Intro(){
+    render(
+      '<div class="kicker">Teil 2 &middot; Kindheit</div>'+
+      '<h1>Jetzt geht es um meine Kindheit</h1>'+
+      '<p class="sub">Die nächsten Fragen sind dieselben Merkmale &ndash; aber diesmal, '+
+      'wie ich als <b>Kind (0&ndash;12 Jahre)</b> war. Wieder von <b>0</b> bis <b>3</b>.</p>'+
+      '<button class="cta" id="cont">Weiter</button>'
+    );
+    document.getElementById("cont").addEventListener("click",function(){ part2Shown=true; draw(); });
   }
 
   function flagErr(errId,msg,fieldId){
@@ -268,6 +281,8 @@
 
   function drawQuestion(idx){
     var q=QUESTIONS[idx];
+    // Interstitial vor der ersten Kindheitsfrage
+    if(q.sec===2 && q.i===0 && !part2Shown){ return drawPart2Intro(); }
     var key=q.sec+"_"+q.i;
     var cur=answers[key];
     var kicker = q.sec===1 ? "Teil 1 &middot; Erwachsenenalter (letzte 6 Monate)"
@@ -315,17 +330,15 @@
     render(
       '<div class="kicker">Fast geschafft</div>'+
       '<h1>'+(complete?"Alle Fragen beantwortet ✓":"Noch "+(TOTAL-answered)+" offen")+'</h1>'+
-      '<p class="sub"><b>'+escapeHtml(meta.name)+'</b> &middot; geb. '+deDate(meta.dob)+' &middot; '+deDate(meta.date)+
-        '<br>Tippen Sie auf eine Frage, um die Antwort zu ändern.</p>'+
+      '<p class="sub">Fragebogen über <b>'+escapeHtml(meta.name)+'</b>'+(meta.dob?' &middot; geb. '+deDate(meta.dob):'')+
+        '<br>Tippe auf eine Frage, um die Antwort zu ändern.</p>'+
       '<div class="rev">'+rows+'</div>'+
       '<p class="err" id="sendErr"></p>'+
-      '<button class="cta" id="send">Absenden</button>'+
-      '<button class="cta ghost" id="editName">Angaben zur Person ändern</button>'
+      '<button class="cta" id="send">Absenden</button>'
     );
     stageEl.querySelectorAll(".revrow").forEach(function(r){
       r.addEventListener("click",function(){ goto(parseInt(r.getAttribute("data-step"),10)); });
     });
-    document.getElementById("editName").addEventListener("click",function(){ goto(0); });
     document.getElementById("send").addEventListener("click",function(){
       if(!complete){
         flagErr("sendErr","Bitte zuerst alle Fragen beantworten. Tippen Sie auf eine rot markierte Frage.",null);
