@@ -3,3 +3,4 @@ package.json
 package-lock.json
 test-pdf.mjs
 test-flow.mjs
+test-vendor.mjs

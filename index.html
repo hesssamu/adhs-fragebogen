@@ -6,7 +6,13 @@
 <meta name="robots" content="noindex, nofollow" />
 <meta name="theme-color" content="#3f6cf6" />
 <title>Fragebogen ADHS &ndash; für Eltern</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.2/jspdf.umd.min.js"></script>
+<script src="vendor/jspdf.umd.min.js"></script>
+<script>
+  // Fallback auf CDN, falls die lokale Datei nicht lädt
+  if(!window.jspdf){
+    document.write('<script src="https://unpkg.com/jspdf@2.5.2/dist/jspdf.umd.min.js"><\/script>');
+  }
+</script>
 <style>
   :root{
     --bg:#eef1f6; --card:#ffffff; --ink:#1f2733; --muted:#67727f;
@@ -442,9 +448,14 @@
 
   function submit(){
     var ov=document.getElementById("ov");ov.classList.add("show");
+    if(!window.jspdf||!window.jspdf.jsPDF){
+      ov.classList.remove("show");
+      flagErr("sendErr","Die PDF-Bibliothek wurde nicht geladen. Bitte einmal neu laden (Seite aktualisieren) und erneut auf Absenden tippen.",null);
+      return;
+    }
     var blob;
     try{blob=buildPDF();}
-    catch(e){ov.classList.remove("show");flagErr("sendErr","PDF konnte nicht erstellt werden. Bitte Seite neu laden.",null);return;}
+    catch(e){ov.classList.remove("show");flagErr("sendErr","PDF konnte nicht erstellt werden: "+(e&&e.message?e.message:e)+". Bitte Seite neu laden.",null);return;}
     var safe=(meta.name||"Fragebogen").replace(/[^\wäöüÄÖÜß \-]/g,"").replace(/\s+/g,"_");
     var fname="ADHS-Fragebogen_"+safe+"_"+roleLabel().replace(/[^\wäöüÄÖÜß]/g,"")+".pdf";
     var fd=new FormData();
