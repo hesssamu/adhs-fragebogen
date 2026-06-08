@@ -144,7 +144,9 @@
   var RESPONDENTS={
     mutter:   {role:"Mutter",    greet:"Liebe Mama",  emoji:"👩", btn:"Mutter"},
     vater:    {role:"Vater",     greet:"Lieber Papa", emoji:"👨", btn:"Vater"},
-    schwester:{role:"Schwester", greet:"Liebe Schwester", emoji:"👧", btn:"Schwester"}
+    schwester:{role:"Schwester", greet:"Liebe Schwester", emoji:"👧", btn:"Schwester"},
+    // versteckter Selbsttest-Link (?r=test) – nicht im Picker sichtbar
+    test:     {role:"TEST (Selbsttest)", greet:"Hallo Samuel – das hier ist ein Testlauf", emoji:"🧪", btn:"Test", hidden:true}
   };
   function parseRespondent(){
     try{ var r=(new URLSearchParams(window.location.search).get("r")||"").toLowerCase();
@@ -257,6 +259,7 @@
     var opts="";
     Object.keys(RESPONDENTS).forEach(function(k){
       var c=RESPONDENTS[k];
+      if(c.hidden) return;
       opts+='<button class="optbtn" data-r="'+k+'"><span class="badge">'+c.emoji+'</span>'+
             '<span class="lab">'+c.btn+'</span></button>';
     });
