@@ -140,6 +140,19 @@
   var PERSON_NAME="Samuel Hess";   // wer beurteilt wird
   var BIRTHDATE="";                // optional: "YYYY-MM-DD" -> erscheint im PDF
 
+  // Wer den Fragebogen beantwortet (Angehörige/r). Per-Person-Link: ...?r=mutter | vater | schwester
+  var RESPONDENTS={
+    mutter:   {role:"Mutter",    greet:"Liebe Mama",  emoji:"👩", btn:"Mutter"},
+    vater:    {role:"Vater",     greet:"Lieber Papa", emoji:"👨", btn:"Vater"},
+    schwester:{role:"Schwester", greet:"Liebe Schwester", emoji:"👧", btn:"Schwester"}
+  };
+  function parseRespondent(){
+    try{ var r=(new URLSearchParams(window.location.search).get("r")||"").toLowerCase();
+      return RESPONDENTS[r]?r:null; }catch(e){ return null; }
+  }
+  var respondent=parseRespondent();
+  function roleLabel(){ return respondent?RESPONDENTS[respondent].role:"Angehörige/r"; }
+
   var OPT_LABELS=["nie oder selten","manchmal","oft","sehr oft"];
 
   var Q1=[
@@ -240,11 +253,32 @@
     return drawReview();
   }
 
+  function drawPicker(){
+    var opts="";
+    Object.keys(RESPONDENTS).forEach(function(k){
+      var c=RESPONDENTS[k];
+      opts+='<button class="optbtn" data-r="'+k+'"><span class="badge">'+c.emoji+'</span>'+
+            '<span class="lab">'+c.btn+'</span></button>';
+    });
+    render(
+      '<div class="kicker">Fragebogen über '+escapeHtml(meta.name)+'</div>'+
+      '<h1>Wer beantwortet den Fragebogen?</h1>'+
+      '<p class="sub">Dieser Fragebogen hilft bei einer ADHS-Abklärung von Samuel. '+
+      'Bitte wählen, wer ihn ausfüllt.</p>'+
+      '<div class="opts" style="margin-top:24px">'+opts+'</div>'
+    );
+    stageEl.querySelectorAll(".optbtn").forEach(function(b){
+      b.addEventListener("click",function(){ respondent=b.getAttribute("data-r"); draw(); });
+    });
+  }
+
   function drawIntro(){
+    if(!respondent) return drawPicker();
+    var cfg=RESPONDENTS[respondent];
     render(
       '<div class="kicker">Fragebogen über '+escapeHtml(meta.name)+'</div>'+
       '<h1>Fragebogen zu Aufmerksamkeit &amp; Hyperaktivität</h1>'+
-      '<p class="sub">Liebe Mama, dieser Fragebogen hilft bei einer ADHS-Abklärung. '+
+      '<p class="sub">'+cfg.greet+', dieser Fragebogen hilft bei einer ADHS-Abklärung. '+
       'Es geht darum, wie du mein Verhalten einschätzt.</p>'+
       '<div class="infoblock">'+
         '<div class="infrow"><span class="ipill">Teil 1</span>'+
@@ -257,9 +291,11 @@
       'Am Ende kannst du alles prüfen und auf <b>Absenden</b> tippen &ndash; '+
       'der Fragebogen kommt dann automatisch bei mir an.</p>'+
       '<button class="cta" id="start">Los geht\'s</button>'+
+      '<button class="cta ghost" id="other">Ich bin jemand anderes</button>'+
       '<p class="author">J.J.S. Kooij and J.K. Buitelaar, &copy; 1997</p>'
     );
     document.getElementById("start").addEventListener("click",function(){ goto(1); });
+    document.getElementById("other").addEventListener("click",function(){ respondent=null; draw(); });
   }
 
   function drawPart2Intro(){
@@ -330,7 +366,7 @@
     render(
       '<div class="kicker">Fast geschafft</div>'+
       '<h1>'+(complete?"Alle Fragen beantwortet ✓":"Noch "+(TOTAL-answered)+" offen")+'</h1>'+
-      '<p class="sub">Fragebogen über <b>'+escapeHtml(meta.name)+'</b>'+(meta.dob?' &middot; geb. '+deDate(meta.dob):'')+
+      '<p class="sub">Über <b>'+escapeHtml(meta.name)+'</b> &middot; beantwortet von <b>'+escapeHtml(roleLabel())+'</b>'+(meta.dob?' &middot; geb. '+deDate(meta.dob):'')+
         '<br>Tippe auf eine Frage, um die Antwort zu ändern.</p>'+
       '<div class="rev">'+rows+'</div>'+
       '<p class="err" id="sendErr"></p>'+
@@ -364,6 +400,10 @@
       doc.setFontSize(9.5);
       doc.text("Name: "+(meta.name||"")+"    Geburtsdatum: "+deDate(meta.dob)+
                "    Patientennr.: "+(meta.pid||"-")+"    Datum: "+deDate(meta.date),L,y);
+      y+=5;
+      doc.setFont("helvetica","bold");
+      doc.text("Ausgefüllt von: "+roleLabel(),L,y);
+      doc.setFont("helvetica","normal");
       return y+6;
     }
     function legend(y,intro){
@@ -403,11 +443,12 @@
     try{blob=buildPDF();}
     catch(e){ov.classList.remove("show");flagErr("sendErr","PDF konnte nicht erstellt werden. Bitte Seite neu laden.",null);return;}
     var safe=(meta.name||"Fragebogen").replace(/[^\wäöüÄÖÜß \-]/g,"").replace(/\s+/g,"_");
-    var fname="ADHS-Fragebogen_"+safe+".pdf";
+    var fname="ADHS-Fragebogen_"+safe+"_"+roleLabel().replace(/[^\wäöüÄÖÜß]/g,"")+".pdf";
     var fd=new FormData();
-    fd.append("_subject","ADHS-Fragebogen ausgefüllt: "+meta.name);
+    fd.append("_subject","ADHS-Fragebogen über "+meta.name+" – ausgefüllt von "+roleLabel());
     fd.append("_captcha","false");
     fd.append("_template","table");
+    fd.append("Ausgefüllt von",roleLabel());
     fd.append("Name",meta.name);
     fd.append("Geburtsdatum",deDate(meta.dob));
     fd.append("Patientennr",meta.pid||"-");
