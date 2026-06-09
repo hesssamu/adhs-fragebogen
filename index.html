@@ -469,13 +469,39 @@
     fd.append("Datum",deDate(meta.date));
     fd.append("Hinweis","Der vollständig ausgefüllte Fragebogen ist als PDF angehängt.");
     fd.append("attachment",blob,fname);
-    fetch("https://formsubmit.co/"+EMAIL,{method:"POST",body:fd,mode:"no-cors"})
-      .then(done).catch(done);
-    function done(){
+    // CORS-fähiger /ajax/-Endpunkt: liefert echtes JSON-Ergebnis, damit wir Erfolg
+    // wirklich prüfen können (das alte mode:"no-cors" konnte Fehler nicht erkennen).
+    fetch("https://formsubmit.co/ajax/"+EMAIL,{method:"POST",body:fd})
+      .then(function(r){ return r.ok?r.json():null; })
+      .then(function(j){ if(j&&String(j.success)==="true"){ ok(); } else { fail(); } })
+      .catch(fail);
+    function ok(){
       document.getElementById("ov_spin").style.display="none";
       document.getElementById("ov_check").style.display="flex";
       document.getElementById("ov_title").textContent="Vielen Dank!";
       document.getElementById("ov_msg").textContent="Der Fragebogen wurde an Samuel gesendet. Sie können dieses Fenster jetzt schließen.";
+    }
+    // Nichts geht verloren: bei JEDEM Fehler wird die PDF heruntergeladen und ein
+    // E-Mail-Fallback angeboten. So kann eine Übermittlung nie still verschwinden.
+    function fail(){
+      try{
+        var a=document.createElement("a");
+        a.href=URL.createObjectURL(blob);a.download=fname;
+        document.body.appendChild(a);a.click();a.remove();
+      }catch(e){}
+      document.getElementById("ov_spin").style.display="none";
+      document.getElementById("ov_title").textContent="Senden hat nicht geklappt";
+      var sub=encodeURIComponent("ADHS-Fragebogen über "+meta.name+" – ausgefüllt von "+roleLabel());
+      var body=encodeURIComponent("Bitte hängen Sie die soeben heruntergeladene Datei \""+fname+"\" an diese E-Mail an. Vielen Dank!");
+      document.getElementById("ov_msg").innerHTML=
+        "Die Übermittlung über das Internet ist fehlgeschlagen &ndash; das passiert oft, wenn der Link in einer App "+
+        "(z.&nbsp;B. WhatsApp oder Instagram) statt im Browser geöffnet wird.<br><br>"+
+        "Kein Problem: Die ausgefüllte PDF wurde gerade auf Ihr Gerät <b>heruntergeladen</b>. "+
+        "Bitte senden Sie diese Datei an <b>"+escapeHtml(EMAIL)+"</b>.<br>"+
+        '<a class="cta" style="display:inline-block;margin-top:14px;text-decoration:none" href="mailto:'+escapeAttr(EMAIL)+"?subject="+sub+"&body="+body+'">E-Mail öffnen</a>'+
+        '<button class="cta ghost" type="button" id="retryBtn" style="margin-top:10px">Erneut versuchen</button>';
+      var rb=document.getElementById("retryBtn");
+      if(rb){ rb.addEventListener("click",function(){ ov.classList.remove("show"); submit(); }); }
     }
   }
 
