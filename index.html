@@ -346,17 +346,21 @@
       '<div class="opts">'+opts+'</div>'
     );
     var btns=stageEl.querySelectorAll(".optbtn");
+    var here=step;            // diese Frage festhalten -> kein Überspringen durch schnelles Tippen
+    var advanceScheduled=false;
     btns.forEach(function(b){
       b.addEventListener("click",function(){
         var v=parseInt(b.getAttribute("data-v"),10);
-        answers[key]=v;
+        answers[key]=v;       // schnelles Doppeltippen darf die Antwort noch ändern ...
         btns.forEach(function(x){x.classList.remove("sel");});
         b.classList.add("sel");
+        if(advanceScheduled) return;   // ... aber nur EINMAL weiterblättern
+        advanceScheduled=true;
         // brief highlight, then either return to the review (if we got here by
         // editing a single answer) or advance to the next question.
         setTimeout(function(){
           if(returnToReview){ returnToReview=false; goto(TOTAL+1); }
-          else { goto(step+1); }
+          else { goto(here+1); }
         }, 180);
       });
     });
