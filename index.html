@@ -223,6 +223,8 @@
   var answers={}; // key "1_0" -> 0..3
   var meta={name:PERSON_NAME,dob:BIRTHDATE,pid:"",date:todayISO()};
   var part2Shown=false; // interstitial vor dem Kindheits-Teil
+  var returnToReview=false; // wenn von der Übersicht aus eine Antwort korrigiert wird,
+                            // danach zurück zur Übersicht statt erneut durch alle Fragen
 
   // steps: 0 = intro, 1..TOTAL = questions, TOTAL+1 = review
   var step=0;
@@ -350,13 +352,18 @@
         answers[key]=v;
         btns.forEach(function(x){x.classList.remove("sel");});
         b.classList.add("sel");
-        // brief highlight then advance
-        setTimeout(function(){ goto(step+1); }, 180);
+        // brief highlight, then either return to the review (if we got here by
+        // editing a single answer) or advance to the next question.
+        setTimeout(function(){
+          if(returnToReview){ returnToReview=false; goto(TOTAL+1); }
+          else { goto(step+1); }
+        }, 180);
       });
     });
   }
 
   function drawReview(){
+    returnToReview=false; // sauberer Zustand, sobald die Übersicht angezeigt wird
     var rows="";
     var firstTodo=null;
     QUESTIONS.forEach(function(q,idx){
@@ -382,12 +389,12 @@
       '<button class="cta" id="send">Absenden</button>'
     );
     stageEl.querySelectorAll(".revrow").forEach(function(r){
-      r.addEventListener("click",function(){ goto(parseInt(r.getAttribute("data-step"),10)); });
+      r.addEventListener("click",function(){ returnToReview=true; goto(parseInt(r.getAttribute("data-step"),10)); });
     });
     document.getElementById("send").addEventListener("click",function(){
       if(!complete){
         flagErr("sendErr","Bitte zuerst alle Fragen beantworten. Tippen Sie auf eine rot markierte Frage.",null);
-        if(firstTodo) setTimeout(function(){goto(firstTodo);},900);
+        if(firstTodo){ returnToReview=true; setTimeout(function(){goto(firstTodo);},900); }
         return;
       }
       submit();
@@ -467,7 +474,17 @@
     fd.append("Geburtsdatum",deDate(meta.dob));
     fd.append("Patientennr",meta.pid||"-");
     fd.append("Datum",deDate(meta.date));
-    fd.append("Hinweis","Der vollständig ausgefüllte Fragebogen ist als PDF angehängt.");
+    // Alle Antworten in den E-Mail-Text legen, damit eine Einsendung auch dann
+    // vollständig ankommt, wenn der PDF-Anhang vom Maildienst entfernt wird.
+    function sumSec(sec){var t=0;for(var i=0;i<23;i++){var v=answers[sec+"_"+i];if(typeof v==="number")t+=v;}return t;}
+    function countHigh(sec){var c=0;for(var i=0;i<23;i++){var v=answers[sec+"_"+i];if(typeof v==="number"&&v>=2)c++;}return c;}
+    function answerBlock(arr,sec){var s="";for(var i=0;i<arr.length;i++){var v=answers[sec+"_"+i];s+=(i+1)+". ["+(v===undefined?"-":v)+"] "+arr[i]+"\n";}return s;}
+    fd.append("Teil 1 Erwachsenenalter – Summe",sumSec("1")+" / 69   ("+countHigh("1")+"x oft/sehr oft)");
+    fd.append("Teil 1 Antworten",answerBlock(Q1,"1"));
+    fd.append("Teil 2 Kindheit – Summe",sumSec("2")+" / 69   ("+countHigh("2")+"x oft/sehr oft)");
+    fd.append("Teil 2 Antworten",answerBlock(Q2,"2"));
+    fd.append("Skala","0 = nie/selten · 1 = manchmal · 2 = oft · 3 = sehr oft");
+    fd.append("Hinweis","Alle Antworten stehen oben im Text. Ein PDF ist zusätzlich angehängt (falls vom Maildienst unterstützt).");
     fd.append("attachment",blob,fname);
     // CORS-fähiger /ajax/-Endpunkt: liefert echtes JSON-Ergebnis, damit wir Erfolg
     // wirklich prüfen können (das alte mode:"no-cors" konnte Fehler nicht erkennen).
@@ -509,7 +526,7 @@
   function escapeHtml(s){return String(s).replace(/[&<>]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;"}[c];});}
   function escapeAttr(s){return String(s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];});}
 
-  backBtn.addEventListener("click",function(){ if(step>0) goto(step-1); });
+  backBtn.addEventListener("click",function(){ returnToReview=false; if(step>0) goto(step-1); });
 
   draw();
 })();
