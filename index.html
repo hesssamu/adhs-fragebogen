@@ -146,11 +146,12 @@
   var PERSON_NAME="Samuel Hess";   // wer beurteilt wird
   var BIRTHDATE="";                // optional: "YYYY-MM-DD" -> erscheint im PDF
 
-  // Wer den Fragebogen beantwortet (Angehörige/r). Per-Person-Link: ...?r=mutter | vater | schwester
+  // Wer den Fragebogen beantwortet (Angehörige/r). Per-Person-Link: ...?r=mutter | vater | schwester | freundin
   var RESPONDENTS={
     mutter:   {role:"Mutter",    greet:"Liebe Mama",  emoji:"👩", btn:"Mutter"},
     vater:    {role:"Vater",     greet:"Lieber Papa", emoji:"👨", btn:"Vater"},
     schwester:{role:"Schwester", greet:"Liebe Schwester", emoji:"👧", btn:"Schwester"},
+    freundin: {role:"Freundin",  greet:"Liebe Hellen", emoji:"💛", btn:"Freundin"},
     // versteckter Selbsttest-Link (?r=test) – nicht im Picker sichtbar
     test:     {role:"TEST (Selbsttest)", greet:"Hallo Samuel – das hier ist ein Testlauf", emoji:"🧪", btn:"Test", hidden:true}
   };
